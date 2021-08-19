@@ -1,0 +1,60 @@
+pipeline{
+ agent any
+parameters {
+  string(name: 'name',defaultValue: '',, description: 'Please enter the name') //change default branch to whatever branch you want
+  string(name: 'State',defaultValue: '',, description: 'Please select the state')
+  string(name: 'service',defaultValue: '',description: 'Please select the service')
+}
+  stages{ 
+   stage("verification"){
+    steps{
+	 script{
+	 echo "${params.name}"
+	 echo "${params.State}"
+	 echo "${params.service}"
+	 }
+	}
+   } 
+   stage("Deployement"){
+	      // when {
+	   
+	   //expression{params.name=="dev" && params.service==true}
+	   
+	  // } 
+    steps{
+	 script{
+	 sshagent(credentials: ['tomcat-cred']) {
+	     echo "started"
+     //sh "ssh root@172.31.30.232 /opt/apache-tomcat-9.0.52/bin/shutdown.sh"
+
+     sh "scp -o StrictHostKeyChecking=no /var/lib/jenkins/workspace/ss1/target/psdapp.war root@3.21.154.239:/opt/apache-tomcat-9.0.52/webapps"
+
+     sh "ssh root@172.31.30.232 /opt/apache-tomcat-9.0.52/bin/startup.sh" 
+      }
+	 
+	 }
+	}
+	post{
+	success{
+	slackSend color: "#439FE0", message: "Build Started: ${JOB_NAME} ${BUILD_NUMBER} is succeded"    
+    mail to: 'naveentanish20@gmail.com',
+    subject: "Job '${JOB_NAME}' (${BUILD_NUMBER}) is waiting for input",
+    body: "Please go to ${BUILD_URL} and  the build is completed"
+	}
+	failure{
+	slackSend color: "#439FE0", message: "Build Started: ${JOB_NAME} ${BUILD_NUMBER} is failed"
+    mail to: 'naveentanish20@gmail.com',
+    subject: "Job '${JOB_NAME}' (${BUILD_NUMBER}) is waiting for input",
+    body: "Please go to ${BUILD_URL} and  the build is Failed"
+	}
+	always{
+	 echo "this is always"
+	}
+
+   }
+}
+}
+}
+
+
+

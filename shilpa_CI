@@ -1,0 +1,76 @@
+pipeline{
+ agent any
+parameters {
+  string(name: 'name',defaultValue: "master", description: 'Please enter the name') //change default branch to whatever branch you want
+  choice(name: 'State',choices: ['dev', 'master', 'PROD'], description: 'Please select the state')
+  booleanParam(name: 'service',description: 'Please select the service',defaultValue: "true",)
+}
+
+  stages{
+   stage("SCM"){
+    steps{
+	 script{
+	  echo "cloning started"
+	   git branch: '$name', credentialsId: 'e5cb736b-5323-41d7-a167-370721d1a06d', url: 'https://github.com/naveen5758/pp1.git'  
+	   echo "$name"
+	  echo "cloning completed"
+	 }
+	
+	} 
+   }
+
+   stage("build"){
+    steps{
+	 script{
+	  echo "build started"
+	  sh 'mvn clean package'
+	  echo "build completed"
+	 }
+	}
+	post{
+	  success{
+	  junit allowEmptyResults: true, skipMarkingBuildUnstable: true, skipPublishingChecks: true, testResults: 'target/surefire-reports/*.xml'
+	  }
+	  }
+   }  
+   
+   stage("sonarqube"){
+    steps{
+	 script{
+	  echo "sonarqube started"
+	  
+	  echo "sonarqube completed"
+	 }
+	}
+   }
+
+   stage("nexus"){
+    steps{
+	 script{
+	  echo "nexus started"
+	  
+	  echo "nexus completed"
+	 
+	 }
+	}
+   }
+   
+   stage("calling_ss2_CD"){
+    steps{
+	 script{
+	  echo "calling started "
+	      build job: 'ss2_CD', parameters: [string(name: 'name', value:"${params.name}"),
+	                                       string(name: 'State', value:"${params.State}"),
+										   string(name: 'service', value:"${params.service}")]
+										   
+	  
+	  echo "call completed"
+	 
+	 }
+	}
+   } 
+  }
+} 
+
+
+
